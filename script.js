@@ -2,7 +2,7 @@
    MEET PATIL — Personal Digital Profile Frontend Script
    ========================================================= */
 
-const API_BASE ="https://my-profile-2-l30b.onrender.com";
+const API_BASE = "https://my-profile-2-l30b.onrender.com";
 
 // Dynamic Profile Data featuring current projects & full progression path
 let profileData = {
@@ -193,11 +193,11 @@ function socialLink(key, icon) {
 
 async function fetchProfile() {
   try {
-    const res = await fetch(`${API_BASE}/profile`);
+    const res = await fetch(`${API_BASE}/api/profile`);
     const data = await res.json();
     if (data.success && data.profile && Object.keys(data.profile).length > 0) {
       const p = data.profile;
-      profileData.name = p.name || profileData.name;
+      profileData.name = p.full_name || p.name || profileData.name;
       profileData.role = p.role || profileData.role;
       profileData.location = p.location || profileData.location;
       if (p.bio) profileData.about = [p.bio];
@@ -212,7 +212,7 @@ async function fetchProfile() {
 
 async function fetchProjects() {
   try {
-    const res = await fetch(`${API_BASE}/projects`);
+    const res = await fetch(`${API_BASE}/api/projects`);
     const data = await res.json();
     if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
       profileData.projects = data.projects;
@@ -560,7 +560,7 @@ function setupContactForm() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/contact`, {
+      const response = await fetch(`${API_BASE}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, message })
