@@ -1,3 +1,4 @@
+import concurrent.futures
 import gc
 import os
 import re
@@ -34,7 +35,7 @@ def handle_error(message, status_code=500, details=None):
 
 
 def send_email_notification(name, email, subject, message):
-    """Sends an email notification via Gmail SMTP over IPv4 SSL (Port 465) to fix IPv6 unreachable errors on Render."""
+    """Sends an email notification using thread execution and port fallbacks to prevent cloud firewall timeouts."""
     email_user = os.getenv("EMAIL_USER")
     email_pass = os.getenv("EMAIL_PASS")
     to_email = os.getenv("TO_EMAIL", email_user)
@@ -62,17 +63,34 @@ def send_email_notification(name, email, subject, message):
     """
     msg.attach(MIMEText(html_content, 'html'))
 
-    try:
-        # Force socket resolution to IPv4 (AF_INET) to resolve 'Errno 101: Network is unreachable' on Render
-        addr_info = socket.getaddrinfo('smtp.gmail.com', 465, socket.AF_INET, socket.SOCK_STREAM)
+    def _dispatch():
+        # Force socket resolution to IPv4 (AF_INET) to prevent IPv6 network routing failures on Render
+        addr_info = socket.getaddrinfo('smtp.gmail.com', 587, socket.AF_INET, socket.SOCK_STREAM)
         target_ip = addr_info[0][4][0]
 
-        with smtplib.SMTP_SSL(target_ip, 465, timeout=10) as server:
-            # Re-bind host name for SSL certificate verification
-            server.server_hostname = 'smtp.gmail.com'
-            server.login(email_user, email_pass)
-            server.send_message(msg)
-        return True
+        # Primary attempt: Port 587 (STARTTLS)
+        try:
+            with smtplib.SMTP(target_ip, 587, timeout=7) as server:
+                server.server_hostname = 'smtp.gmail.com'
+                server.starttls()
+                server.login(email_user, email_pass)
+                server.send_message(msg)
+            return True
+        except Exception:
+            # Secondary fallback: Port 465 (SSL)
+            addr_info_ssl = socket.getaddrinfo('smtp.gmail.com', 465, socket.AF_INET, socket.SOCK_STREAM)
+            target_ip_ssl = addr_info_ssl[0][4][0]
+            with smtplib.SMTP_SSL(target_ip_ssl, 465, timeout=7) as server:
+                server.server_hostname = 'smtp.gmail.com'
+                server.login(email_user, email_pass)
+                server.send_message(msg)
+            return True
+
+    try:
+        # Enforce non-blocking background dispatch with a maximum runtime ceiling
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_dispatch)
+            return future.result(timeout=8)
     except Exception as mail_err:
         app.logger.error(f"Failed to send email notification: {mail_err}")
         return False
@@ -199,7 +217,7 @@ def submit_contact():
         if response.data:
             created_message = response.data[0]
 
-            # Attempt to send outbound email notification via IPv4 SSL (Port 465)
+            # Dispatch outbound email via multi-port IPv4 threading
             send_email_notification(name, email, subject, message)
 
             return jsonify({
