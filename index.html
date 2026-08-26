@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meet Patil — Personal Digital Profile</title>
+    <meta name="description" content="Meet Patil — Developer, Student, Technology Explorer. Building. Learning. Growing." />
+
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <!-- Google Fonts: Playfair Display + DM Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta property="og:image" content="https://bolt.new/static/og_default.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
+</head>
+  <body>
+    <!-- ===================== NAVBAR ===================== -->
+    <nav id="mainNav" class="navbar navbar-expand-lg fixed-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="#home">
+          <span class="brand-dot"></span> MEET PATIL
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+          aria-controls="navMenu"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0" id="navList">
+            <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="#skills">Skills</a></li>
+            <li class="nav-item"><a class="nav-link" href="#roadmap">Roadmap</a></li>
+            <li class="nav-item"><a class="nav-link" href="#projects">Projects</a></li>
+            <li class="nav-item"><a class="nav-link" href="#journey">Journey</a></li>
+            <li class="nav-item"><a class="nav-link" href="#profile">Profile</a></li>
+            <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- ===================== HERO ===================== -->
+      <header id="home" class="hero section">
+        <div class="container">
+          <div class="row align-items-center g-5">
+            <div class="col-lg-7 hero-text">
+              <p class="eyebrow reveal">WELCOME TO MY DIGITAL SPACE</p>
+              <h1 class="display-hero reveal">
+                Hi, I'm<br />
+                <span class="accent-name" id="heroName">Meet Patil.</span>
+              </h1>
+              <p class="hero-role reveal" id="heroRole">Developer • Student • Technology Explorer</p>
+              <p class="hero-desc reveal">
+                I'm a developer and student who enjoys building digital
+                experiences, exploring new technologies and turning ideas
+                into practical projects.
+              </p>
+              <div class="hero-actions reveal">
+                <a href="#roadmap" class="btn btn-accent">Explore My Journey <i class="bi bi-arrow-right ms-1"></i></a>
+                <a href="#projects" class="btn btn-outline-soft">View My Projects</a>
+              </div>
+              <div class="hero-social reveal" id="heroSocial"></div>
+            </div>
+            <div class="col-lg-5">
+              <div class="profile-card reveal">
+                <div class="profile-photo">
+                  <span class="photo-label">YOUR PROFILE PHOTO</span>
+                </div>
+                <div class="profile-card-body">
+                  <p class="m-0 text-uppercase fw-semibold small-label">Current Focus</p>
+                  <p class="focus-line">Building.</p>
+                  <p class="focus-line">Learning.</p>
+                  <p class="focus-line">Growing.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===================== ABOUT ===================== -->
+      <section id="about" class="section">
+        <div class="container">
+          <div class="row g-5">
+            <div class="col-lg-7">
+              <p class="eyebrow reveal">ABOUT ME</p>
+              <h2 class="section-heading reveal">
+                More than just<br />code.
+              </h2>
+              <div class="about-text reveal" id="aboutText"></div>
+            </div>
+            <div class="col-lg-5">
+              <div class="edu-card reveal" id="educationCard"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== SKILLS ===================== -->
+      <section id="skills" class="section section-alt">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">SKILLS</p>
+            <h2 class="section-heading reveal">My toolkit so far.</h2>
+            <p class="section-sub reveal">Honest levels — no invented percentages.</p>
+          </div>
+          <div class="row g-4" id="skillsGrid"></div>
+        </div>
+      </section>
+
+      <!-- ===================== ROADMAP ===================== -->
+      <section id="roadmap" class="section">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">CAREER ROADMAP</p>
+            <h2 class="section-heading reveal">The direction I'm heading.</h2>
+            <p class="section-sub reveal">Click any milestone to see the details.</p>
+          </div>
+          <div class="roadmap" id="roadmapTimeline"></div>
+        </div>
+      </section>
+
+      <!-- ===================== PROJECTS ===================== -->
+      <section id="projects" class="section section-alt">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">PROJECTS</p>
+            <h2 class="section-heading reveal">Things I'm building.</h2>
+            <p class="section-sub reveal">Only real work — honest status on every project.</p>
+          </div>
+          <div class="project-filters reveal" id="projectFilters"></div>
+          <div class="row g-4 mt-2" id="projectsGrid"></div>
+        </div>
+      </section>
+
+      <!-- ===================== CURRENTLY LEARNING ===================== -->
+      <section id="learning" class="section">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">CURRENTLY LEARNING</p>
+            <h2 class="section-heading reveal">What I'm working on right now.</h2>
+          </div>
+          <div class="row g-4" id="learningGrid"></div>
+        </div>
+      </section>
+
+      <!-- ===================== LEARNING JOURNEY ===================== -->
+      <section id="journey" class="section section-alt">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">LEARNING JOURNEY</p>
+            <h2 class="section-heading reveal">The path I'm on.</h2>
+          </div>
+          <div class="journey-flow" id="journeyFlow"></div>
+        </div>
+      </section>
+
+      <!-- ===================== ACHIEVEMENTS ===================== -->
+      <section id="achievements" class="section">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">ACHIEVEMENTS</p>
+            <h2 class="section-heading reveal">Milestones worth noting.</h2>
+            <p class="section-sub reveal">Nothing invented — only what's real, added when it happens.</p>
+          </div>
+          <div id="achievementsWrap"></div>
+        </div>
+      </section>
+
+      <!-- ===================== PROFILE DASHBOARD ===================== -->
+      <section id="profile" class="section section-alt">
+        <div class="container">
+          <div class="text-center mb-5">
+            <p class="eyebrow reveal">PROFILE</p>
+            <h2 class="section-heading reveal">My digital profile.</h2>
+          </div>
+          <div class="profile-dashboard reveal" id="profileDashboard"></div>
+        </div>
+      </section>
+
+      <!-- ===================== CONTACT ===================== -->
+      <section id="contact" class="section">
+        <div class="container">
+          <div class="row g-5 align-items-center">
+            <div class="col-lg-5">
+              <p class="eyebrow reveal">GET IN TOUCH</p>
+              <h2 class="section-heading reveal">Let's create something.</h2>
+              <p class="section-sub reveal">
+                Have an idea, a question, or just want to connect? Send a message.
+              </p>
+            </div>
+            <div class="col-lg-7">
+              <form class="contact-form reveal" id="contactForm" novalidate>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="cName" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="cName" required />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="cEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="cEmail" required />
+                  </div>
+                  <div class="col-12">
+                    <label for="cSubject" class="form-label">Subject</label>
+                    <input type="text" class="form-control" id="cSubject" required />
+                  </div>
+                  <div class="col-12">
+                    <label for="cMessage" class="form-label">Message</label>
+                    <textarea class="form-control" id="cMessage" rows="4" required></textarea>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-accent">Send Message <i class="bi bi-send ms-1"></i></button>
+                  </div>
+                  <div class="col-12">
+                    <div class="form-feedback" id="formFeedback" role="status" aria-live="polite"></div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div>
+            <h3 class="footer-name">MEET PATIL</h3>
+            <p class="footer-tag">Building. Learning. Growing.</p>
+          </div>
+          <div class="footer-social" id="footerSocial"></div>
+        </div>
+        <hr class="footer-divider" />
+        <p class="footer-copy">© 2026 Meet Patil</p>
+      </div>
+    </footer>
+
+    <!-- ===================== ROADMAP DETAIL MODAL ===================== -->
+    <div class="modal fade" id="roadmapModal" tabindex="-1" aria-labelledby="roadmapModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content roadmap-modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="roadmapModalLabel"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="roadmapModalBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS bundle -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+     <script src="script.js"></script>
+  </body>
+</html>
