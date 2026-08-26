@@ -2,6 +2,7 @@ import gc
 import os
 import re
 import smtplib
+import socket
 import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -33,13 +34,13 @@ def handle_error(message, status_code=500, details=None):
 
 
 def send_email_notification(name, email, subject, message):
-    """Sends an email notification via Gmail SMTP."""
+    """Sends an email notification via Gmail SMTP forcing IPv4 to prevent Errno 101 on Render."""
     email_user = os.getenv("EMAIL_USER")
     email_pass = os.getenv("EMAIL_PASS")
     to_email = os.getenv("TO_EMAIL", email_user)
 
     if not email_user or not email_pass:
-        app.logger.warning("Email credentials (EMAIL_USER / EMAIL_PASS) missing in .env")
+        app.logger.warning("Email credentials (EMAIL_USER / EMAIL_PASS) missing in environment variables.")
         return False
 
     msg = MIMEMultipart('alternative')
@@ -61,11 +62,22 @@ def send_email_notification(name, email, subject, message):
     """
     msg.attach(MIMEText(html_content, 'html'))
 
-    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+    try:
+        # Resolve host specifically using IPv4 (AF_INET) to bypass Render IPv6 routing restrictions
+        addr_info = socket.getaddrinfo('smtp.gmail.com', 587, socket.AF_INET)[0]
+        sock = socket.socket(addr_info[0], addr_info[1], addr_info[2])
+        sock.connect(addr_info[4])
+
+        server = smtplib.SMTP(host='smtp.gmail.com', port=587)
+        server.sock = sock
         server.starttls()
         server.login(email_user, email_pass)
         server.send_message(msg)
-    return True
+        server.quit()
+        return True
+    except Exception as mail_err:
+        app.logger.error(f"Failed to send email notification: {mail_err}")
+        return False
 
 
 # -------------------------------------------------------------------
@@ -74,7 +86,7 @@ def send_email_notification(name, email, subject, message):
 
 @app.route("/", methods=["GET"])
 def serve_index():
-    """Serves index.html directly from the current folder."""
+    """Serves index.html directly from the root folder."""
     return send_from_directory(BASE_DIR, "index.html")
 
 
@@ -85,7 +97,7 @@ def favicon():
 
 
 # -------------------------------------------------------------------
-# PUBLIC APIS (Static Data)
+# PUBLIC APIS (Static Data & Health Check)
 # -------------------------------------------------------------------
 
 @app.route("/api/health", methods=["GET"])
@@ -102,7 +114,7 @@ def get_profile():
         "success": True,
         "profile": {
             "full_name": "Meet Patil",
-            "bio": "Welcome to my personal portfolio website!"
+            "bio": "Frontend Developer • AI Application Developer • Backend Learner"
         }
     }), 200
 
@@ -112,10 +124,11 @@ def get_skills():
     return jsonify({
         "success": True,
         "skills": [
-            {"name": "Python", "category": "Backend"},
-            {"name": "Flask", "category": "Backend"},
-            {"name": "JavaScript", "category": "Frontend"},
-            {"name": "HTML/CSS", "category": "Frontend"}
+            {"name": "JavaScript (ES6+)", "category": "Frontend"},
+            {"name": "Bootstrap 5", "category": "Frontend"},
+            {"name": "Python & Flask", "category": "Backend"},
+            {"name": "Node.js & Express", "category": "Backend"},
+            {"name": "AI API Integration", "category": "AI"}
         ]
     }), 200
 
@@ -126,12 +139,14 @@ def get_projects():
         "success": True,
         "projects": [
             {
-                "title": "PeopleFirst",
-                "description": "Full-Stack AI Platform."
+                "name": "PeopleFirst",
+                "category": "Full-Stack AI",
+                "description": "Full-stack AI platform integrating chat, career roadmaps, and Node.js APIs."
             },
             {
-                "title": "CivicSphere",
-                "description": "AI-powered civic engineering and disaster response platform."
+                "name": "CivicSphere",
+                "category": "Full-Stack AI",
+                "description": "AI platform for emergency response coordination and civic grievance management."
             }
         ]
     }), 200
@@ -139,26 +154,17 @@ def get_projects():
 
 @app.route("/api/roadmap", methods=["GET"])
 def get_roadmap():
-    return jsonify({
-        "success": True,
-        "roadmap": []
-    }), 200
+    return jsonify({"success": True, "roadmap": []}), 200
 
 
 @app.route("/api/learning", methods=["GET"])
 def get_learning():
-    return jsonify({
-        "success": True,
-        "learning": []
-    }), 200
+    return jsonify({"success": True, "learning": []}), 200
 
 
 @app.route("/api/achievements", methods=["GET"])
 def get_achievements():
-    return jsonify({
-        "success": True,
-        "achievements": []
-    }), 200
+    return jsonify({"success": True, "achievements": []}), 200
 
 
 # -------------------------------------------------------------------
@@ -189,17 +195,14 @@ def submit_contact():
             "is_read": False
         }
 
-        # Inserts into the single 'messages' table in Supabase
+        # Insert record into Supabase 'messages' table
         response = supabase.table("messages").insert(payload).execute()
 
         if response.data:
             created_message = response.data[0]
 
-            # Send email alert to your inbox
-            try:
-                send_email_notification(name, email, subject, message)
-            except Exception as mail_err:
-                app.logger.error(f"Failed to send email notification: {mail_err}")
+            # Attempt to send outbound email notification
+            send_email_notification(name, email, subject, message)
 
             return jsonify({
                 "success": True,
@@ -212,7 +215,7 @@ def submit_contact():
     except Exception as e:
         return handle_error("An error occurred while submitting your message.", details=traceback.format_exc())
     finally:
-        # Free memory immediately after request processing
+        # Free memory immediately to support Render free tier limitations
         gc.collect()
 
 
