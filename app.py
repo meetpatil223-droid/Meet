@@ -2,7 +2,6 @@ import gc
 import os
 import re
 import smtplib
-import socket
 import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -34,13 +33,13 @@ def handle_error(message, status_code=500, details=None):
 
 
 def send_email_notification(name, email, subject, message):
-    """Sends an email notification via Gmail SMTP forcing IPv4 to prevent Errno 101 on Render."""
+    """Sends an email notification via Gmail SMTP using SSL (Port 465) to bypass Render firewall timeouts."""
     email_user = os.getenv("EMAIL_USER")
     email_pass = os.getenv("EMAIL_PASS")
     to_email = os.getenv("TO_EMAIL", email_user)
 
     if not email_user or not email_pass:
-        app.logger.warning("Email credentials (EMAIL_USER / EMAIL_PASS) missing in environment variables.")
+        app.logger.warning("Email credentials missing in environment variables.")
         return False
 
     msg = MIMEMultipart('alternative')
@@ -63,17 +62,10 @@ def send_email_notification(name, email, subject, message):
     msg.attach(MIMEText(html_content, 'html'))
 
     try:
-        # Resolve host specifically using IPv4 (AF_INET) to bypass Render IPv6 routing restrictions
-        addr_info = socket.getaddrinfo('smtp.gmail.com', 587, socket.AF_INET)[0]
-        sock = socket.socket(addr_info[0], addr_info[1], addr_info[2])
-        sock.connect(addr_info[4])
-
-        server = smtplib.SMTP(host='smtp.gmail.com', port=587)
-        server.sock = sock
-        server.starttls()
-        server.login(email_user, email_pass)
-        server.send_message(msg)
-        server.quit()
+        # SMTP_SSL over Port 465 works smoothly without timing out on cloud hosts
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as server:
+            server.login(email_user, email_pass)
+            server.send_message(msg)
         return True
     except Exception as mail_err:
         app.logger.error(f"Failed to send email notification: {mail_err}")
@@ -201,7 +193,7 @@ def submit_contact():
         if response.data:
             created_message = response.data[0]
 
-            # Attempt to send outbound email notification
+            # Attempt to send outbound email notification via SSL (Port 465)
             send_email_notification(name, email, subject, message)
 
             return jsonify({
@@ -215,7 +207,7 @@ def submit_contact():
     except Exception as e:
         return handle_error("An error occurred while submitting your message.", details=traceback.format_exc())
     finally:
-        # Free memory immediately to support Render free tier limitations
+        # Free memory immediately to prevent free-tier out-of-memory restarts
         gc.collect()
 
 
@@ -226,3 +218,4 @@ if __name__ == "__main__":
     print("======================================")
 
     app.run(host="127.0.0.1", port=5000, debug=True)
+
