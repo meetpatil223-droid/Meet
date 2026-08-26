@@ -2,7 +2,7 @@
    MEET PATIL — Personal Digital Profile Frontend Script
    ========================================================= */
 
-const API_BASE = "http://127.0.0.1:5000/api";
+const API_BASE = "https://my-profile-2-l30b.onrender.com/api";
 
 // Dynamic Profile Data featuring current projects & full progression path
 let profileData = {
