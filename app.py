@@ -2,6 +2,7 @@ import gc
 import os
 import re
 import smtplib
+import socket
 import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -33,7 +34,7 @@ def handle_error(message, status_code=500, details=None):
 
 
 def send_email_notification(name, email, subject, message):
-    """Sends an email notification via Gmail SMTP using SSL (Port 465) to bypass Render firewall timeouts."""
+    """Sends an email notification via Gmail SMTP over IPv4 SSL (Port 465) to fix IPv6 unreachable errors on Render."""
     email_user = os.getenv("EMAIL_USER")
     email_pass = os.getenv("EMAIL_PASS")
     to_email = os.getenv("TO_EMAIL", email_user)
@@ -62,8 +63,13 @@ def send_email_notification(name, email, subject, message):
     msg.attach(MIMEText(html_content, 'html'))
 
     try:
-        # SMTP_SSL over Port 465 works smoothly without timing out on cloud hosts
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as server:
+        # Force socket resolution to IPv4 (AF_INET) to resolve 'Errno 101: Network is unreachable' on Render
+        addr_info = socket.getaddrinfo('smtp.gmail.com', 465, socket.AF_INET, socket.SOCK_STREAM)
+        target_ip = addr_info[0][4][0]
+
+        with smtplib.SMTP_SSL(target_ip, 465, timeout=10) as server:
+            # Re-bind host name for SSL certificate verification
+            server.server_hostname = 'smtp.gmail.com'
             server.login(email_user, email_pass)
             server.send_message(msg)
         return True
@@ -193,7 +199,7 @@ def submit_contact():
         if response.data:
             created_message = response.data[0]
 
-            # Attempt to send outbound email notification via SSL (Port 465)
+            # Attempt to send outbound email notification via IPv4 SSL (Port 465)
             send_email_notification(name, email, subject, message)
 
             return jsonify({
@@ -218,4 +224,6 @@ if __name__ == "__main__":
     print("======================================")
 
     app.run(host="127.0.0.1", port=5000, debug=True)
+
+
 
