@@ -1,15 +1,16 @@
+import gc
 import os
 import re
-import traceback
 import smtplib
-from email.mime.text import MIMEText
+import traceback
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
 # Load environment variables before importing database
 load_dotenv()
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from database import supabase
 
@@ -100,7 +101,7 @@ def get_profile():
     return jsonify({
         "success": True,
         "profile": {
-            "full_name": "Your Name",
+            "full_name": "Meet Patil",
             "bio": "Welcome to my personal portfolio website!"
         }
     }), 200
@@ -125,8 +126,12 @@ def get_projects():
         "success": True,
         "projects": [
             {
-                "title": "Personal Portfolio",
-                "description": "Flask and Supabase portfolio app."
+                "title": "PeopleFirst",
+                "description": "Full-Stack AI Platform."
+            },
+            {
+                "title": "CivicSphere",
+                "description": "AI-powered civic engineering and disaster response platform."
             }
         ]
     }), 200
@@ -206,6 +211,9 @@ def submit_contact():
 
     except Exception as e:
         return handle_error("An error occurred while submitting your message.", details=traceback.format_exc())
+    finally:
+        # Free memory immediately after request processing
+        gc.collect()
 
 
 if __name__ == "__main__":
