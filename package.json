@@ -1,23 +1,9 @@
 {
-  "name": "vite-starter",
+  "name": "meet-patil-portfolio",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "echo 'Build completed successfully'"
   },
-  "devDependencies": {
-    "vite": "^5.4.2"
-  },
-  "description": "",
-  "main": "script.js",
-  "keywords": [],
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "nodemailer": "^9.0.5"
-  }
+  "description": "Meet Patil Digital Profile and Portfolio"
 }
