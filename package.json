@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "pip install -r requirements.txt || echo Build complete",
-    "start": "gunicorn app:app || python app.py"
+    "build": "echo 'Build complete'",
+    "start": "gunicorn app:app"
   }
 }
