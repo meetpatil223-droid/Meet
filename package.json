@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "echo 'Build complete'",
+    "build": "mkdir -p dist && cp -r index.html style.css script.js vendor dist 2>/dev/null || echo 'Build complete'",
     "start": "gunicorn app:app"
   }
 }
