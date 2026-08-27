@@ -623,7 +623,7 @@ function setupContactForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, message })
-      }, 10000);
+      }, 15000);
 
       const result = await response.json();
 

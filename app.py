@@ -1,9 +1,9 @@
-import concurrent.futures
 import gc
 import os
 import re
 import smtplib
 import socket
+import threading
 import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -14,7 +14,7 @@ load_dotenv()
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from database import supabase
+from database import supabase, get_db
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,7 +35,7 @@ def handle_error(message, status_code=500, details=None):
 
 
 def send_email_notification(name, email, subject, message):
-    """Sends an email notification using thread execution and port fallbacks to prevent cloud firewall timeouts."""
+    """Dispatches email notification asynchronously in a background daemon thread."""
     email_user = os.getenv("EMAIL_USER")
     email_pass = os.getenv("EMAIL_PASS")
     to_email = os.getenv("TO_EMAIL", email_user)
@@ -47,11 +47,11 @@ def send_email_notification(name, email, subject, message):
     # Gmail app passwords frequently contain spaces when generated (e.g. 'xxxx xxxx xxxx xxxx')
     clean_pass = email_pass.replace(" ", "") if (" " in email_pass and len(email_pass.replace(" ", "")) == 16) else email_pass
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"📩 New Portfolio Message: {subject}"
-    msg['From'] = f"{name} <{email_user}>"
-    msg['To'] = to_email
-    msg['Reply-To'] = email
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"📩 New Portfolio Message: {subject}"
+    msg["From"] = f"{name} <{email_user}>"
+    msg["To"] = to_email
+    msg["Reply-To"] = email
 
     html_content = f"""
     <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ded2c2; border-radius: 8px;">
@@ -64,45 +64,45 @@ def send_email_notification(name, email, subject, message):
       <p style="white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 5px;">{message}</p>
     </div>
     """
-    msg.attach(MIMEText(html_content, 'html'))
+    msg.attach(MIMEText(html_content, "html"))
 
     def _dispatch():
         # Primary attempt: Port 587 (STARTTLS) with IPv4 resolution
         try:
             try:
-                addr_info = socket.getaddrinfo('smtp.gmail.com', 587, socket.AF_INET, socket.SOCK_STREAM)
+                addr_info = socket.getaddrinfo("smtp.gmail.com", 587, socket.AF_INET, socket.SOCK_STREAM)
                 target_ip = addr_info[0][4][0]
             except Exception:
-                target_ip = 'smtp.gmail.com'
+                target_ip = "smtp.gmail.com"
 
-            with smtplib.SMTP(target_ip, 587, timeout=7) as server:
+            with smtplib.SMTP(target_ip, 587, timeout=5) as server:
                 server.ehlo()
                 server.starttls()
                 server.ehlo()
                 server.login(email_user, clean_pass)
                 server.send_message(msg)
             return True
-        except Exception:
+        except Exception as e1:
             # Secondary fallback: Port 465 (SSL) with IPv4 resolution
             try:
-                addr_info_ssl = socket.getaddrinfo('smtp.gmail.com', 465, socket.AF_INET, socket.SOCK_STREAM)
+                addr_info_ssl = socket.getaddrinfo("smtp.gmail.com", 465, socket.AF_INET, socket.SOCK_STREAM)
                 target_ip_ssl = addr_info_ssl[0][4][0]
             except Exception:
-                target_ip_ssl = 'smtp.gmail.com'
+                target_ip_ssl = "smtp.gmail.com"
 
-            with smtplib.SMTP_SSL(target_ip_ssl, 465, timeout=7) as server:
-                server.login(email_user, clean_pass)
-                server.send_message(msg)
-            return True
+            try:
+                with smtplib.SMTP_SSL(target_ip_ssl, 465, timeout=5) as server:
+                    server.login(email_user, clean_pass)
+                    server.send_message(msg)
+                return True
+            except Exception as e2:
+                app.logger.warning(f"Background email dispatch error: {e2}")
+                return False
 
-    try:
-        # Enforce non-blocking background dispatch with a maximum runtime ceiling
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(_dispatch)
-            return future.result(timeout=8)
-    except Exception as mail_err:
-        app.logger.error(f"Failed to send email notification: {mail_err}")
-        return False
+    # Launch daemon background thread immediately without blocking the HTTP response
+    t = threading.Thread(target=_dispatch, daemon=True)
+    t.start()
+    return True
 
 
 # -------------------------------------------------------------------
@@ -300,7 +300,7 @@ def get_achievements():
 
 
 # -------------------------------------------------------------------
-# DATABASE API (Supabase Integration + Email Dispatch)
+# DATABASE API (Supabase + Local SQLite Dual Support & Background Email)
 # -------------------------------------------------------------------
 
 @app.route("/api/contact", methods=["POST"])
@@ -327,22 +327,39 @@ def submit_contact():
             "is_read": False
         }
 
-        if not supabase:
-            return handle_error("Database connection is not configured.", status_code=503)
+        saved_id = None
 
-        # Insert record into Supabase 'messages' table
-        response = supabase.table("messages").insert(payload).execute()
+        # 1. Primary storage: Supabase table 'messages'
+        if supabase:
+            try:
+                response = supabase.table("messages").insert(payload).execute()
+                if response.data and len(response.data) > 0:
+                    saved_id = response.data[0].get("id")
+            except Exception as sb_err:
+                app.logger.warning(f"Supabase write error, falling back to SQLite: {sb_err}")
 
-        if response.data:
-            created_message = response.data[0]
+        # 2. Secondary fallback storage: Local SQLite database
+        if saved_id is None:
+            try:
+                with get_db() as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT INTO messages (name, email, subject, message, is_read) VALUES (?, ?, ?, ?, ?)",
+                        (name, email, subject, message, 0)
+                    )
+                    conn.commit()
+                    saved_id = cur.lastrowid
+            except Exception as db_err:
+                app.logger.error(f"Local database write error: {db_err}")
 
-            # Dispatch outbound email via multi-port IPv4 threading
+        if saved_id is not None:
+            # Dispatch background email notification (non-blocking)
             send_email_notification(name, email, subject, message)
 
             return jsonify({
                 "success": True,
                 "message": "Message received successfully",
-                "id": created_message.get("id")
+                "id": saved_id
             }), 201
 
         return handle_error("Could not save message.", status_code=500)
@@ -350,17 +367,13 @@ def submit_contact():
     except Exception as e:
         return handle_error("An error occurred while submitting your message.", details=traceback.format_exc())
     finally:
-        # Free memory immediately to prevent free-tier out-of-memory restarts
         gc.collect()
 
 
 if __name__ == "__main__":
     print("======================================")
-    print("🚀 Personal Profile App")
-    print("🌐 Website: http://127.0.0.1:5000/")
+    print("[*] Personal Profile App")
+    print("[*] Website: http://127.0.0.1:5000/")
     print("======================================")
 
     app.run(host="127.0.0.1", port=5000, debug=True)
-
-
-
