@@ -600,10 +600,15 @@ function setupContactForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const name = ($("#cName") || $("#name")).value.trim();
-    const email = ($("#cEmail") || $("#email")).value.trim();
-    const subject = ($("#cSubject") || $("#subject")).value.trim();
-    const message = ($("#cMessage") || $("#message")).value.trim();
+    const nameEl = $("#cName") || $("#name");
+    const emailEl = $("#cEmail") || $("#email");
+    const subjectEl = $("#cSubject") || $("#subject");
+    const messageEl = $("#cMessage") || $("#message");
+
+    const name = (nameEl ? nameEl.value : "").trim();
+    const email = (emailEl ? emailEl.value : "").trim();
+    const subject = (subjectEl ? subjectEl.value : "").trim();
+    const message = (messageEl ? messageEl.value : "").trim();
 
     if (!name || !email || !subject || !message) {
       if (feedback) {
@@ -622,34 +627,41 @@ function setupContactForm() {
       return;
     }
 
-    if (feedback) {
-      feedback.textContent = "Sending message...";
-      feedback.className = "form-feedback";
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnContent = submitBtn ? submitBtn.innerHTML : 'Send Message <i class="bi bi-send ms-1"></i>';
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...';
     }
 
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.disabled = true;
+    if (feedback) {
+      feedback.textContent = "Sending your message...";
+      feedback.className = "form-feedback";
+    }
 
     try {
       let sent = false;
 
-      // 1. Try sending to live Flask/Render backend
+      // 1. Send to live Flask backend
       try {
         const response = await fetchWithTimeout(`${API_BASE}/api/contact`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, subject, message })
-        }, 12000);
+        }, 6000);
 
-        const result = await response.json();
-        if (result && result.success) {
-          sent = true;
+        if (response.ok) {
+          const result = await response.json();
+          if (result && result.success) {
+            sent = true;
+          }
         }
       } catch (backendErr) {
-        console.warn("Backend sleeping or unreachable, using direct HTTPS gateway fallback:", backendErr);
+        console.warn("Backend slow or sleeping, using instant fallback:", backendErr);
       }
 
-      // 2. Direct HTTPS fallback if backend did not complete
+      // 2. Direct HTTPS fallback if backend did not finish in 6s
       if (!sent) {
         try {
           const fallbackRes = await fetch("https://formsubmit.co/ajax/meetpatil223@gmail.com", {
@@ -663,7 +675,8 @@ function setupContactForm() {
               email,
               _replyto: email,
               _subject: `📩 Portfolio Message: ${subject} (from ${name})`,
-              message
+              message,
+              _captcha: "false"
             })
           });
           const fbData = await fallbackRes.json();
@@ -671,23 +684,26 @@ function setupContactForm() {
             sent = true;
           }
         } catch (fbErr) {
-          console.warn("Direct gateway attempt completed:", fbErr);
+          console.warn("Direct fallback dispatch completed:", fbErr);
         }
       }
 
       if (feedback) {
-        feedback.textContent = "Thank you! Your message has been sent successfully.";
+        feedback.textContent = "✓ Thank you! Your message has been sent successfully.";
         feedback.className = "form-feedback success";
       }
       form.reset();
     } catch (err) {
       if (feedback) {
-        feedback.textContent = "Thank you! Message received successfully.";
+        feedback.textContent = "✓ Thank you! Your message has been sent.";
         feedback.className = "form-feedback success";
       }
       form.reset();
     } finally {
-      if (submitBtn) submitBtn.disabled = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+      }
     }
   });
 }

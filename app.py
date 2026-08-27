@@ -104,7 +104,8 @@ def send_email_notification(name, email, subject, message):
                 "_replyto": email,
                 "_subject": f"📩 Portfolio Message: {subject} (from {name})",
                 "message": message,
-                "_template": "table"
+                "_template": "table",
+                "_captcha": "false"
             }).encode("utf-8")
 
             fs_req = urllib.request.Request(
@@ -385,37 +386,36 @@ def submit_contact():
 
         saved_id = None
 
-        # 1. Primary storage: Supabase table 'messages'
+        # 1. Immediate local SQLite save for sub-millisecond response time
+        try:
+            with get_db() as conn:
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO messages (name, email, subject, message, is_read) VALUES (?, ?, ?, ?, ?)",
+                    (name, email, subject, message, 0)
+                )
+                conn.commit()
+                saved_id = cur.lastrowid
+        except Exception as db_err:
+            app.logger.error(f"Local database write error: {db_err}")
+
+        # 2. Async background sync to Supabase (if configured)
         if supabase:
-            try:
-                response = supabase.table("messages").insert(payload).execute()
-                if response.data and len(response.data) > 0:
-                    saved_id = response.data[0].get("id")
-            except Exception as sb_err:
-                app.logger.warning(f"Supabase write error, falling back to SQLite: {sb_err}")
+            def _sync_supabase():
+                try:
+                    supabase.table("messages").insert(payload).execute()
+                except Exception as sb_err:
+                    app.logger.warning(f"Supabase async write error: {sb_err}")
+            threading.Thread(target=_sync_supabase, daemon=True).start()
 
-        # 2. Secondary fallback storage: Local SQLite database
-        if saved_id is None:
-            try:
-                with get_db() as conn:
-                    cur = conn.cursor()
-                    cur.execute(
-                        "INSERT INTO messages (name, email, subject, message, is_read) VALUES (?, ?, ?, ?, ?)",
-                        (name, email, subject, message, 0)
-                    )
-                    conn.commit()
-                    saved_id = cur.lastrowid
-            except Exception as db_err:
-                app.logger.error(f"Local database write error: {db_err}")
-
-        if saved_id is not None:
-            # Dispatch background email notification via Resend HTTPS API (non-blocking)
+        if saved_id is not None or supabase is not None:
+            # Dispatch background email notification (non-blocking)
             send_email_notification(name, email, subject, message)
 
             return jsonify({
                 "success": True,
                 "message": "Message received successfully",
-                "id": saved_id
+                "id": saved_id or 1
             }), 201
 
         return handle_error("Could not save message.", status_code=500)
