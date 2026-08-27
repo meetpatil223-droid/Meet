@@ -208,7 +208,14 @@ function socialLink(key, icon) {
 
 /* ---------- API Fetchers (With Fast Timeout & Deep Fallback) ---------- */
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  if (typeof AbortController === "undefined") {
+    try {
+      return await fetch(url, options);
+    } catch (e) {
+      return null;
+    }
+  }
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -220,16 +227,16 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
     return response;
   } catch (error) {
     clearTimeout(id);
-    throw error;
+    return null;
   }
 }
 
 async function fetchProfile() {
   try {
     const res = await fetchWithTimeout(`${API_BASE}/api/profile`);
-    if (!res.ok) return;
+    if (!res || !res.ok) return;
     const data = await res.json();
-    if (data.success && data.profile && Object.keys(data.profile).length > 0) {
+    if (data && data.success && data.profile && Object.keys(data.profile).length > 0) {
       const p = data.profile;
       profileData.name = p.full_name || p.name || profileData.name;
       profileData.role = p.role || p.bio || profileData.role;
@@ -243,18 +250,15 @@ async function fetchProfile() {
       renderAbout();
       renderProfileDashboard();
     }
-  } catch (err) {
-    // Graceful fallback to local profileData
-  }
+  } catch (_) {}
 }
 
 async function fetchProjects() {
   try {
     const res = await fetchWithTimeout(`${API_BASE}/api/projects`);
-    if (!res.ok) return;
+    if (!res || !res.ok) return;
     const data = await res.json();
-    if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
-      // Merge with default project icons/features/technologies if not returned by API
+    if (data && data.success && Array.isArray(data.projects) && data.projects.length > 0) {
       profileData.projects = data.projects.map((proj, idx) => {
         const fallback = profileData.projects[idx] || {};
         return {
@@ -272,9 +276,7 @@ async function fetchProjects() {
       renderProjects();
       renderProfileDashboard();
     }
-  } catch (err) {
-    // Graceful fallback to local projects
-  }
+  } catch (_) {}
 }
 
 /* ---------- Render UI Components ---------- */
