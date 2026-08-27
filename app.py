@@ -1,10 +1,12 @@
 import gc
+import json
 import os
 import re
 import smtplib
-import socket
 import threading
 import traceback
+import urllib.error
+import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
@@ -35,69 +37,82 @@ def handle_error(message, status_code=500, details=None):
 
 
 def send_email_notification(name, email, subject, message):
-    """Dispatches email notification asynchronously in a background daemon thread."""
-    email_user = os.getenv("EMAIL_USER")
-    email_pass = os.getenv("EMAIL_PASS")
-    to_email = os.getenv("TO_EMAIL", email_user)
-
-    if not email_user or not email_pass:
-        app.logger.warning("Email credentials missing in environment variables.")
-        return False
-
-    # Gmail app passwords frequently contain spaces when generated (e.g. 'xxxx xxxx xxxx xxxx')
-    clean_pass = email_pass.replace(" ", "") if (" " in email_pass and len(email_pass.replace(" ", "")) == 16) else email_pass
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"📩 New Portfolio Message: {subject}"
-    msg["From"] = f"{name} <{email_user}>"
-    msg["To"] = to_email
-    msg["Reply-To"] = email
+    """
+    Sends email notification via Resend HTTPS REST API (cloud-safe, no SMTP blocking)
+    with fallback to direct Gmail SMTP if configured.
+    """
+    resend_api_key = os.getenv("RESEND_API_KEY")
+    resend_to_email = os.getenv("RESEND_TO_EMAIL", "meetpatil223@gmail.com")
+    to_email = os.getenv("TO_EMAIL", "meetpatil223@gmail.com")
 
     html_content = f"""
-    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ded2c2; border-radius: 8px;">
-      <h2 style="color: #333;">New Contact Form Submission</h2>
-      <p><strong>Name:</strong> {name}</p>
-      <p><strong>Email:</strong> {email}</p>
-      <p><strong>Subject:</strong> {subject}</p>
-      <hr style="border: 0.5px solid #eee;" />
-      <p><strong>Message:</strong></p>
-      <p style="white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 5px;">{message}</p>
+    <div style="font-family: Arial, sans-serif; padding: 24px; border: 1px solid #ded2c2; border-radius: 12px; background-color: #fffdf8; color: #29251f; max-width: 600px;">
+      <h2 style="color: #8b6f47; margin-top: 0; border-bottom: 2px solid #ded2c2; padding-bottom: 12px;">📩 New Portfolio Message</h2>
+      <p style="margin: 8px 0;"><strong>From:</strong> {name}</p>
+      <p style="margin: 8px 0;"><strong>Email:</strong> <a href="mailto:{email}" style="color: #8b6f47;">{email}</a></p>
+      <p style="margin: 8px 0;"><strong>Subject:</strong> {subject}</p>
+      <hr style="border: 0.5px solid #ded2c2; margin: 16px 0;" />
+      <p style="margin: 8px 0;"><strong>Message:</strong></p>
+      <div style="white-space: pre-wrap; background: #f5efe6; padding: 16px; border-radius: 8px; border: 1px solid #ded2c2; font-size: 15px; line-height: 1.6;">{message}</div>
+      <p style="margin-top: 20px; font-size: 12px; color: #6f665c;">Sent automatically from your Meet Patil Portfolio.</p>
     </div>
     """
-    msg.attach(MIMEText(html_content, "html"))
 
     def _dispatch():
-        # Primary attempt: Port 587 (STARTTLS) with IPv4 resolution
-        try:
+        # 1. Primary Method: Resend HTTPS REST API (Works 100% on Render, Vercel & Cloud)
+        if resend_api_key:
             try:
-                addr_info = socket.getaddrinfo("smtp.gmail.com", 587, socket.AF_INET, socket.SOCK_STREAM)
-                target_ip = addr_info[0][4][0]
-            except Exception:
-                target_ip = "smtp.gmail.com"
+                payload = json.dumps({
+                    "from": "Portfolio Contact <onboarding@resend.dev>",
+                    "to": [resend_to_email],
+                    "reply_to": email,
+                    "subject": f"📩 Portfolio Message: {subject} (from {name})",
+                    "html": html_content
+                }).encode("utf-8")
 
-            with smtplib.SMTP(target_ip, 587, timeout=5) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(email_user, clean_pass)
-                server.send_message(msg)
-            return True
-        except Exception as e1:
-            # Secondary fallback: Port 465 (SSL) with IPv4 resolution
-            try:
-                addr_info_ssl = socket.getaddrinfo("smtp.gmail.com", 465, socket.AF_INET, socket.SOCK_STREAM)
-                target_ip_ssl = addr_info_ssl[0][4][0]
-            except Exception:
-                target_ip_ssl = "smtp.gmail.com"
+                req = urllib.request.Request(
+                    "https://api.resend.com/emails",
+                    data=payload,
+                    headers={
+                        "Authorization": f"Bearer {resend_api_key}",
+                        "Content-Type": "application/json",
+                        "User-Agent": "MeetPatil-Portfolio/1.0"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=8) as res:
+                    app.logger.info(f"Email sent via Resend API: {res.read().decode('utf-8')}")
+                    return True
+            except urllib.error.HTTPError as he:
+                error_body = he.read().decode("utf-8", errors="ignore")
+                app.logger.warning(f"Resend API HTTP Error {he.code}: {error_body}")
+            except Exception as resend_err:
+                app.logger.warning(f"Resend API dispatch failed: {resend_err}")
 
+        # 2. Secondary Fallback: Direct Gmail SMTP (Local development)
+        email_user = os.getenv("EMAIL_USER")
+        email_pass = os.getenv("EMAIL_PASS")
+        if email_user and email_pass:
             try:
-                with smtplib.SMTP_SSL(target_ip_ssl, 465, timeout=5) as server:
+                clean_pass = email_pass.replace(" ", "") if (" " in email_pass and len(email_pass.replace(" ", "")) == 16) else email_pass
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = f"📩 New Portfolio Message: {subject}"
+                msg["From"] = f"{name} <{email_user}>"
+                msg["To"] = to_email
+                msg["Reply-To"] = email
+                msg.attach(MIMEText(html_content, "html"))
+
+                with smtplib.SMTP("smtp.gmail.com", 587, timeout=5) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
                     server.login(email_user, clean_pass)
                     server.send_message(msg)
+                app.logger.info("Email sent via Gmail SMTP")
                 return True
-            except Exception as e2:
-                app.logger.warning(f"Background email dispatch error: {e2}")
-                return False
+            except Exception as smtp_err:
+                app.logger.warning(f"Gmail SMTP fallback failed: {smtp_err}")
+
+        return False
 
     # Launch daemon background thread immediately without blocking the HTTP response
     t = threading.Thread(target=_dispatch, daemon=True)
@@ -300,7 +315,7 @@ def get_achievements():
 
 
 # -------------------------------------------------------------------
-# DATABASE API (Supabase + Local SQLite Dual Support & Background Email)
+# DATABASE API (Supabase + Local SQLite Dual Support & Resend Email)
 # -------------------------------------------------------------------
 
 @app.route("/api/contact", methods=["POST"])
@@ -353,7 +368,7 @@ def submit_contact():
                 app.logger.error(f"Local database write error: {db_err}")
 
         if saved_id is not None:
-            # Dispatch background email notification (non-blocking)
+            # Dispatch background email notification via Resend HTTPS API (non-blocking)
             send_email_notification(name, email, subject, message)
 
             return jsonify({
