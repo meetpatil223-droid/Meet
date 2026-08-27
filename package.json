@@ -1,9 +1,0 @@
-{
-  "name": "meet-patil-portfolio",
-  "private": true,
-  "version": "1.0.0",
-  "scripts": {
-    "build": "echo 'Build completed successfully'"
-  },
-  "description": "Meet Patil Digital Profile and Portfolio"
-}
