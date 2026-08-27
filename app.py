@@ -44,6 +44,9 @@ def send_email_notification(name, email, subject, message):
         app.logger.warning("Email credentials missing in environment variables.")
         return False
 
+    # Gmail app passwords frequently contain spaces when generated (e.g. 'xxxx xxxx xxxx xxxx')
+    clean_pass = email_pass.replace(" ", "") if (" " in email_pass and len(email_pass.replace(" ", "")) == 16) else email_pass
+
     msg = MIMEMultipart('alternative')
     msg['Subject'] = f"📩 New Portfolio Message: {subject}"
     msg['From'] = f"{name} <{email_user}>"
@@ -64,25 +67,31 @@ def send_email_notification(name, email, subject, message):
     msg.attach(MIMEText(html_content, 'html'))
 
     def _dispatch():
-        # Force socket resolution to IPv4 (AF_INET) to prevent IPv6 network routing failures on Render
-        addr_info = socket.getaddrinfo('smtp.gmail.com', 587, socket.AF_INET, socket.SOCK_STREAM)
-        target_ip = addr_info[0][4][0]
-
-        # Primary attempt: Port 587 (STARTTLS)
+        # Primary attempt: Port 587 (STARTTLS) with IPv4 resolution
         try:
+            try:
+                addr_info = socket.getaddrinfo('smtp.gmail.com', 587, socket.AF_INET, socket.SOCK_STREAM)
+                target_ip = addr_info[0][4][0]
+            except Exception:
+                target_ip = 'smtp.gmail.com'
+
             with smtplib.SMTP(target_ip, 587, timeout=7) as server:
-                server.server_hostname = 'smtp.gmail.com'
+                server.ehlo()
                 server.starttls()
-                server.login(email_user, email_pass)
+                server.ehlo()
+                server.login(email_user, clean_pass)
                 server.send_message(msg)
             return True
         except Exception:
-            # Secondary fallback: Port 465 (SSL)
-            addr_info_ssl = socket.getaddrinfo('smtp.gmail.com', 465, socket.AF_INET, socket.SOCK_STREAM)
-            target_ip_ssl = addr_info_ssl[0][4][0]
+            # Secondary fallback: Port 465 (SSL) with IPv4 resolution
+            try:
+                addr_info_ssl = socket.getaddrinfo('smtp.gmail.com', 465, socket.AF_INET, socket.SOCK_STREAM)
+                target_ip_ssl = addr_info_ssl[0][4][0]
+            except Exception:
+                target_ip_ssl = 'smtp.gmail.com'
+
             with smtplib.SMTP_SSL(target_ip_ssl, 465, timeout=7) as server:
-                server.server_hostname = 'smtp.gmail.com'
-                server.login(email_user, email_pass)
+                server.login(email_user, clean_pass)
                 server.send_message(msg)
             return True
 
@@ -130,7 +139,12 @@ def get_profile():
         "success": True,
         "profile": {
             "full_name": "Meet Patil",
-            "bio": "Frontend Developer • AI Application Developer • Backend Learner"
+            "role": "Frontend Developer • AI Application Developer • Backend Learner",
+            "location": "Maharashtra, India",
+            "about": [
+                "I am a Frontend Developer and AI Application Developer actively expanding my capabilities into full-stack and backend engineering.",
+                "My focus is on creating responsive, intuitive user interfaces and connecting them with AI capabilities and Node.js backend services to build practical digital products."
+            ]
         }
     }), 200
 
@@ -140,11 +154,37 @@ def get_skills():
     return jsonify({
         "success": True,
         "skills": [
-            {"name": "JavaScript (ES6+)", "category": "Frontend"},
-            {"name": "Bootstrap 5", "category": "Frontend"},
-            {"name": "Python & Flask", "category": "Backend"},
-            {"name": "Node.js & Express", "category": "Backend"},
-            {"name": "AI API Integration", "category": "AI"}
+            {
+                "category": "Frontend Development",
+                "icon": "bi-layout-text-window-reverse",
+                "items": [
+                    {"name": "HTML5 / CSS3", "level": "Comfortable"},
+                    {"name": "JavaScript (ES6+)", "level": "Comfortable"},
+                    {"name": "Bootstrap 5", "level": "Comfortable"},
+                    {"name": "Tailwind CSS", "level": "Developing"},
+                    {"name": "Responsive UI/UX", "level": "Comfortable"}
+                ]
+            },
+            {
+                "category": "AI & APIs",
+                "icon": "bi-cpu",
+                "items": [
+                    {"name": "AI API Integration", "level": "Comfortable"},
+                    {"name": "AI Chat Services", "level": "Comfortable"},
+                    {"name": "AI Prompt Engineering", "level": "Comfortable"},
+                    {"name": "RESTful APIs", "level": "Comfortable"}
+                ]
+            },
+            {
+                "category": "Backend Learning Path",
+                "icon": "bi-server",
+                "items": [
+                    {"name": "Node.js & Express", "level": "Building"},
+                    {"name": "User Authentication", "level": "Building"},
+                    {"name": "Databases (SQL/NoSQL)", "level": "Learning"},
+                    {"name": "System Architecture", "level": "Learning"}
+                ]
+            }
         ]
     }), 200
 
@@ -157,12 +197,36 @@ def get_projects():
             {
                 "name": "PeopleFirst",
                 "category": "Full-Stack AI",
-                "description": "Full-stack AI platform integrating chat, career roadmaps, and Node.js APIs."
+                "icon": "bi-person-badge",
+                "status": "Completed",
+                "description": "Full-stack AI platform integrating chat, career roadmaps, and Node.js APIs.",
+                "features": [
+                    "AI Chat & AI Quiz Generator",
+                    "Education Features & Student News",
+                    "AI Career Roadmap Generator",
+                    "User Authentication & Secure API Integrations",
+                    "Modern Responsive UI/UX"
+                ],
+                "technologies": ["Frontend (JS/CSS)", "Node.js Backend", "Express", "AI APIs", "Authentication"],
+                "github_url": "",
+                "live_url": ""
             },
             {
                 "name": "CivicSphere",
                 "category": "Full-Stack AI",
-                "description": "AI platform for emergency response coordination and civic grievance management."
+                "icon": "bi-building-gear",
+                "status": "Currently Working On",
+                "description": "AI platform for emergency response coordination and civic grievance management.",
+                "features": [
+                    "AI-Powered Civic Assistance",
+                    "Disaster & Emergency Response Coordination",
+                    "Farmer Support & Agricultural Tools",
+                    "Smart Grievance Management System",
+                    "Citizen-Focused Information Portal"
+                ],
+                "technologies": ["Frontend Architecture", "Node.js Backend", "Databases", "AI Integration", "API Architecture"],
+                "github_url": "",
+                "live_url": ""
             }
         ]
     }), 200
@@ -170,12 +234,64 @@ def get_projects():
 
 @app.route("/api/roadmap", methods=["GET"])
 def get_roadmap():
-    return jsonify({"success": True, "roadmap": []}), 200
+    return jsonify({
+        "success": True,
+        "roadmap": [
+            {
+                "title": "1. Core Web Foundation",
+                "status": "Completed",
+                "statusClass": "status-completed",
+                "description": "Mastered frontend styling and structural principles through clean HTML5, CSS3, and responsive design systems.",
+                "learning": "Semantic markup, CSS Flexbox/Grid, mobile-first design.",
+                "technologies": ["HTML5", "CSS3", "Responsive Web Design"],
+                "progress": 100,
+                "nextGoal": "Advanced JavaScript functionality"
+            },
+            {
+                "title": "2. Modern JavaScript & Frameworks",
+                "status": "Completed",
+                "statusClass": "status-completed",
+                "description": "Built dynamic web interfaces utilizing ES6 JavaScript syntax alongside modern UI toolkits like Bootstrap 5 and Tailwind CSS.",
+                "learning": "DOM manipulation, async programming, UI components.",
+                "technologies": ["JavaScript (ES6+)", "Bootstrap 5", "Tailwind CSS"],
+                "progress": 100,
+                "nextGoal": "API integrations and dynamic data flows"
+            },
+            {
+                "title": "3. Full-Stack AI Platforms (PeopleFirst)",
+                "status": "Completed",
+                "statusClass": "status-completed",
+                "description": "Successfully built and deployed PeopleFirst — an AI-powered platform integrating chat, career roadmaps, authentication, and Node.js API services.",
+                "learning": "Full-stack integration, authentication, AI APIs, responsive UX.",
+                "technologies": ["Node.js", "Express", "AI APIs", "Authentication", "JavaScript"],
+                "progress": 100,
+                "nextGoal": "Architecting large-scale civic systems"
+            },
+            {
+                "title": "4. Civic Engineering & Disaster Response (CivicSphere)",
+                "status": "Currently Developing",
+                "statusClass": "status-currently-working-on",
+                "description": "Building CivicSphere — an AI platform designed for emergency response coordination, smart grievance management, and citizen support.",
+                "learning": "Scalable backend architecture, real-time coordination feeds, database integration.",
+                "technologies": ["AI Coordination", "Node.js Architecture", "Smart Grievances", "Databases"],
+                "progress": 60,
+                "nextGoal": "Complete end-to-end backend and deploy live testing"
+            }
+        ]
+    }), 200
 
 
 @app.route("/api/learning", methods=["GET"])
 def get_learning():
-    return jsonify({"success": True, "learning": []}), 200
+    return jsonify({
+        "success": True,
+        "learning": [
+            {"name": "Node.js & Express Architecture", "icon": "bi-server", "status": "Active Focus"},
+            {"name": "Database Design & Management", "icon": "bi-database", "status": "Learning"},
+            {"name": "Advanced AI API Orchestration", "icon": "bi-cpu", "status": "Building"},
+            {"name": "System Authentication & Security", "icon": "bi-shield-lock", "status": "Building"}
+        ]
+    }), 200
 
 
 @app.route("/api/achievements", methods=["GET"])
@@ -210,6 +326,9 @@ def submit_contact():
             "message": message,
             "is_read": False
         }
+
+        if not supabase:
+            return handle_error("Database connection is not configured.", status_code=503)
 
         # Insert record into Supabase 'messages' table
         response = supabase.table("messages").insert(payload).execute()

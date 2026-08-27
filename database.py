@@ -11,13 +11,12 @@ load_dotenv(dotenv_path=env_path)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("❌ ERROR: Missing SUPABASE_URL or SUPABASE_KEY in environment variables.")
-    print(f"Looked for .env at: {env_path}")
-    sys.exit(1)
+supabase: Client = None
 
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception as e:
-    print(f"❌ Failed to initialize Supabase client: {str(e)}")
-    sys.exit(1)
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"❌ Failed to initialize Supabase client: {str(e)}")
+else:
+    print("⚠️ WARNING: Missing SUPABASE_URL or SUPABASE_KEY in environment variables.")

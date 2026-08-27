@@ -2,7 +2,24 @@
    MEET PATIL — Personal Digital Profile Frontend Script
    ========================================================= */
 
-const API_BASE = "https://my-profile-2-l30b.onrender.com";
+const API_BASE = (() => {
+  if (typeof window !== "undefined" && window.location) {
+    const hostname = window.location.hostname;
+    // Local development (Flask server on port 5000)
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      if (window.location.port === "5173" || window.location.port === "3000") {
+        return "http://127.0.0.1:5000";
+      }
+      return "";
+    }
+    // Render deployment
+    if (window.location.origin.includes("onrender.com")) {
+      return "";
+    }
+  }
+  // Default to live backend for GitHub Pages or static hosting
+  return "https://my-profile-2-l30b.onrender.com";
+})();
 
 // Dynamic Profile Data featuring current projects & full progression path
 let profileData = {
@@ -200,7 +217,11 @@ async function fetchProfile() {
       profileData.name = p.full_name || p.name || profileData.name;
       profileData.role = p.role || profileData.role;
       profileData.location = p.location || profileData.location;
-      if (p.bio) profileData.about = [p.bio];
+      if (Array.isArray(p.about) && p.about.length > 0) {
+        profileData.about = p.about;
+      } else if (typeof p.about === "string" && p.about.trim()) {
+        profileData.about = [p.about];
+      }
       renderHero();
       renderAbout();
       renderProfileDashboard();
@@ -215,7 +236,21 @@ async function fetchProjects() {
     const res = await fetch(`${API_BASE}/api/projects`);
     const data = await res.json();
     if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
-      profileData.projects = data.projects;
+      // Merge with default project icons/features if not returned by API
+      profileData.projects = data.projects.map((proj, idx) => {
+        const fallback = profileData.projects[idx] || {};
+        return {
+          name: proj.name || fallback.name || "Project",
+          category: proj.category || fallback.category || "Full-Stack AI",
+          icon: proj.icon || fallback.icon || "bi-folder",
+          status: proj.status || fallback.status || "Completed",
+          description: proj.description || fallback.description || "",
+          features: proj.features || fallback.features || [],
+          technologies: proj.technologies || fallback.technologies || [],
+          github_url: proj.github_url || fallback.github_url || "",
+          live_url: proj.live_url || fallback.live_url || ""
+        };
+      });
       renderProjects();
       renderProfileDashboard();
     }
