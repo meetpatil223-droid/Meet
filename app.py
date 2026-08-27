@@ -426,6 +426,37 @@ def submit_contact():
         gc.collect()
 
 
+@app.route("/api/messages", methods=["GET"])
+def get_messages():
+    """Retrieve all received contact messages (from Supabase or local SQLite)."""
+    try:
+        messages = []
+        if supabase:
+            try:
+                res = supabase.table("messages").select("*").order("created_at", desc=True).execute()
+                if res.data:
+                    messages = res.data
+            except Exception as sb_err:
+                app.logger.warning(f"Supabase read error: {sb_err}")
+
+        if not messages:
+            try:
+                with get_db() as conn:
+                    cur = conn.cursor()
+                    cur.execute("SELECT * FROM messages ORDER BY id DESC")
+                    messages = [dict(row) for row in cur.fetchall()]
+            except Exception as db_err:
+                app.logger.error(f"SQLite read error: {db_err}")
+
+        return jsonify({
+            "success": True,
+            "count": len(messages),
+            "messages": messages
+        }), 200
+    except Exception as e:
+        return handle_error("Could not fetch messages.", details=str(e))
+
+
 if __name__ == "__main__":
     print("======================================")
     print("[*] Personal Profile App")
