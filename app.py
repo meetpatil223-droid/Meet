@@ -95,7 +95,38 @@ def send_email_notification(name, email, subject, message):
         else:
             print("[NOTIFICATION INFO] RESEND_API_KEY not set. Check your Render Environment Variables.", flush=True)
 
-        # 2. Secondary Fallback: Direct Gmail SMTP (Local development)
+        # 2. Secondary Method: FormSubmit HTTPS Gateway (Cloud-safe, direct inbox delivery to meetpatil223@gmail.com)
+        try:
+            print(f"[NOTIFICATION] Attempting FormSubmit HTTPS gateway to {to_email}...", flush=True)
+            fs_payload = json.dumps({
+                "name": name,
+                "email": email,
+                "_replyto": email,
+                "_subject": f"📩 Portfolio Message: {subject} (from {name})",
+                "message": message,
+                "_template": "table"
+            }).encode("utf-8")
+
+            fs_req = urllib.request.Request(
+                f"https://formsubmit.co/ajax/{to_email}",
+                data=fs_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Origin": "https://my-profile-2-l30b.onrender.com",
+                    "Referer": "https://my-profile-2-l30b.onrender.com/"
+                }
+            )
+            with urllib.request.urlopen(fs_req, timeout=10) as fs_res:
+                fs_body = fs_res.read().decode("utf-8")
+                print(f"[NOTIFICATION SUCCESS] Email dispatched via FormSubmit: {fs_body}", flush=True)
+                app.logger.info(f"Email dispatched via FormSubmit: {fs_body}")
+                return True
+        except Exception as fs_err:
+            print(f"[NOTIFICATION ERROR] FormSubmit dispatch failed: {fs_err}", flush=True)
+            app.logger.warning(f"FormSubmit dispatch failed: {fs_err}")
+
+        # 3. Tertiary Fallback: Direct Gmail SMTP (Local development)
         email_user = os.getenv("EMAIL_USER")
         email_pass = os.getenv("EMAIL_PASS")
         if email_user and email_pass:
@@ -121,8 +152,6 @@ def send_email_notification(name, email, subject, message):
             except Exception as smtp_err:
                 print(f"[NOTIFICATION ERROR] Gmail SMTP fallback failed: {smtp_err}", flush=True)
                 app.logger.warning(f"Gmail SMTP fallback failed: {smtp_err}")
-        elif not resend_api_key:
-            print("[NOTIFICATION ERROR] No email service configured (missing RESEND_API_KEY or EMAIL_USER/EMAIL_PASS).", flush=True)
 
         return False
 

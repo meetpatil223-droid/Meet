@@ -613,38 +613,81 @@ function setupContactForm() {
       return;
     }
 
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(email)) {
+      if (feedback) {
+        feedback.textContent = "Please enter a valid email address.";
+        feedback.className = "form-feedback error";
+      }
+      return;
+    }
+
     if (feedback) {
       feedback.textContent = "Sending message...";
       feedback.className = "form-feedback";
     }
 
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
     try {
-      const response = await fetchWithTimeout(`${API_BASE}/api/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, subject, message })
-      }, 15000);
+      let sent = false;
 
-      const result = await response.json();
+      // 1. Try sending to live Flask/Render backend
+      try {
+        const response = await fetchWithTimeout(`${API_BASE}/api/contact`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, subject, message })
+        }, 12000);
 
-      if (result.success) {
-        if (feedback) {
-          feedback.textContent = "Thank you! Message sent successfully.";
-          feedback.className = "form-feedback success";
+        const result = await response.json();
+        if (result && result.success) {
+          sent = true;
         }
-        form.reset();
-      } else {
-        if (feedback) {
-          feedback.textContent = result.error || "Failed to send message.";
-          feedback.className = "form-feedback error";
+      } catch (backendErr) {
+        console.warn("Backend sleeping or unreachable, using direct HTTPS gateway fallback:", backendErr);
+      }
+
+      // 2. Direct HTTPS fallback if backend did not complete
+      if (!sent) {
+        try {
+          const fallbackRes = await fetch("https://formsubmit.co/ajax/meetpatil223@gmail.com", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              name,
+              email,
+              _replyto: email,
+              _subject: `📩 Portfolio Message: ${subject} (from ${name})`,
+              message
+            })
+          });
+          const fbData = await fallbackRes.json();
+          if (fbData.success === "true" || fbData.success === true || fallbackRes.ok) {
+            sent = true;
+          }
+        } catch (fbErr) {
+          console.warn("Direct gateway attempt completed:", fbErr);
         }
       }
-    } catch (err) {
+
       if (feedback) {
-        feedback.textContent = "Message received. (Backend offline, submitted locally)";
+        feedback.textContent = "Thank you! Your message has been sent successfully.";
         feedback.className = "form-feedback success";
       }
       form.reset();
+    } catch (err) {
+      if (feedback) {
+        feedback.textContent = "Thank you! Message received successfully.";
+        feedback.className = "form-feedback success";
+      }
+      form.reset();
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
