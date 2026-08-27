@@ -584,7 +584,8 @@ a:hover {
 }
 .status-current,
 .status-in-development,
-.status-currently-working-on {
+.status-currently-working-on,
+.status-currently-developing {
   background: #efe2cf;
   color: #8b6f47;
 }
@@ -718,7 +719,8 @@ a:hover {
   color: #5e4a2e;
 }
 .proj-status-in-development,
-.proj-status-currently-working-on {
+.proj-status-currently-working-on,
+.proj-status-currently-developing {
   background: #efe2cf;
   color: #8b6f47;
 }
@@ -1029,12 +1031,21 @@ a:hover {
    ========================================================= */
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transform: translateY(22px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
 }
 .reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 @media (max-width: 991.98px) {

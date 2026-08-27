@@ -206,16 +206,33 @@ function socialLink(key, icon) {
   return `<a class="disabled-link" aria-label="${key} (not added yet)" title="Not added yet"><i class="bi ${icon}"></i></a>`;
 }
 
-/* ---------- API Fetchers (Falls back cleanly) ---------- */
+/* ---------- API Fetchers (With Fast Timeout & Deep Fallback) ---------- */
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
 
 async function fetchProfile() {
   try {
-    const res = await fetch(`${API_BASE}/api/profile`);
+    const res = await fetchWithTimeout(`${API_BASE}/api/profile`);
+    if (!res.ok) return;
     const data = await res.json();
     if (data.success && data.profile && Object.keys(data.profile).length > 0) {
       const p = data.profile;
       profileData.name = p.full_name || p.name || profileData.name;
-      profileData.role = p.role || profileData.role;
+      profileData.role = p.role || p.bio || profileData.role;
       profileData.location = p.location || profileData.location;
       if (Array.isArray(p.about) && p.about.length > 0) {
         profileData.about = p.about;
@@ -227,16 +244,17 @@ async function fetchProfile() {
       renderProfileDashboard();
     }
   } catch (err) {
-    console.warn("Using local fallback for Profile API");
+    // Graceful fallback to local profileData
   }
 }
 
 async function fetchProjects() {
   try {
-    const res = await fetch(`${API_BASE}/api/projects`);
+    const res = await fetchWithTimeout(`${API_BASE}/api/projects`);
+    if (!res.ok) return;
     const data = await res.json();
     if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
-      // Merge with default project icons/features if not returned by API
+      // Merge with default project icons/features/technologies if not returned by API
       profileData.projects = data.projects.map((proj, idx) => {
         const fallback = profileData.projects[idx] || {};
         return {
@@ -245,8 +263,8 @@ async function fetchProjects() {
           icon: proj.icon || fallback.icon || "bi-folder",
           status: proj.status || fallback.status || "Completed",
           description: proj.description || fallback.description || "",
-          features: proj.features || fallback.features || [],
-          technologies: proj.technologies || fallback.technologies || [],
+          features: (Array.isArray(proj.features) && proj.features.length > 0) ? proj.features : (fallback.features || []),
+          technologies: (Array.isArray(proj.technologies) && proj.technologies.length > 0) ? proj.technologies : (fallback.technologies || []),
           github_url: proj.github_url || fallback.github_url || "",
           live_url: proj.live_url || fallback.live_url || ""
         };
@@ -255,7 +273,7 @@ async function fetchProjects() {
       renderProfileDashboard();
     }
   } catch (err) {
-    console.warn("Using local fallback for Projects API");
+    // Graceful fallback to local projects
   }
 }
 
@@ -336,7 +354,7 @@ function renderRoadmap() {
         : "";
 
       return `
-        <div class="milestone reveal" 
+        <div class="milestone reveal visible" 
              data-index="${index}" 
              role="button" 
              tabindex="0" 
@@ -357,16 +375,22 @@ function renderRoadmap() {
     })
     .join("");
 
+  attachRoadmapEvents();
+}
+
+function attachRoadmapEvents() {
+  const container = $("#roadmapTimeline");
+  if (!container) return;
   $$(".milestone", container).forEach((el) => {
     const index = parseInt(el.dataset.index, 10);
     const handleAction = () => openRoadmapDetail(index);
-    el.addEventListener("click", handleAction);
-    el.addEventListener("keydown", (e) => {
+    el.onclick = handleAction;
+    el.onkeydown = (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         handleAction();
       }
-    });
+    };
   });
 }
 
@@ -440,17 +464,17 @@ function renderProjects() {
 
   grid.innerHTML = filtered
     .map((p) => {
-      const statusSlug = p.status.toLowerCase().replace(/\s+/g, "-");
+      const statusSlug = (p.status || "completed").toLowerCase().replace(/\s+/g, "-");
       const featuresHtml = p.features && p.features.length
         ? `<ul class="proj-feature-list">
-            ${p.features.map(f => `<li><i class="bi bi-check2-circle"></i> ${escapeHtml(f)}</li>`).join("")}
+            ${p.features.map((f) => `<li><i class="bi bi-check2-circle"></i> ${escapeHtml(f)}</li>`).join("")}
            </ul>`
         : "";
 
       return `
         <div class="col-md-6">
           <div class="project-card">
-            <div class="proj-icon"><i class="bi ${p.icon}"></i></div>
+            <div class="proj-icon"><i class="bi ${p.icon || "bi-folder"}"></i></div>
             <h4>${escapeHtml(p.name)}</h4>
             <p class="proj-desc">${escapeHtml(p.description)}</p>
             ${featuresHtml}
@@ -494,7 +518,7 @@ function renderJourney() {
   const last = profileData.journey.length - 1;
   flow.innerHTML = profileData.journey
     .map((step, i) => {
-      const card = `<div class="journey-step ${i === last ? "final" : ""} reveal">${i + 1}. ${escapeHtml(step)}</div>`;
+      const card = `<div class="journey-step ${i === last ? "final" : ""} reveal visible">${i + 1}. ${escapeHtml(step)}</div>`;
       return i === last ? card : `${card}<div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>`;
     })
     .join("");
@@ -504,7 +528,7 @@ function renderAchievements() {
   const wrap = $("#achievementsWrap");
   if (!wrap) return;
   wrap.innerHTML = `
-    <div class="achievements-empty reveal">
+    <div class="achievements-empty reveal visible">
       <i class="bi bi-trophy"></i>
       <h4>Building & Expanding</h4>
       <p>Project milestones, platform launches, and tech certifications will be updated dynamically here.</p>
@@ -595,11 +619,11 @@ function setupContactForm() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/contact`, {
+      const response = await fetchWithTimeout(`${API_BASE}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, message })
-      });
+      }, 10000);
 
       const result = await response.json();
 
@@ -617,7 +641,7 @@ function setupContactForm() {
       }
     } catch (err) {
       if (feedback) {
-        feedback.textContent = "Message recorded locally. (Backend server offline)";
+        feedback.textContent = "Message received. (Backend offline, submitted locally)";
         feedback.className = "form-feedback success";
       }
       form.reset();
@@ -625,7 +649,7 @@ function setupContactForm() {
   });
 }
 
-/* ---------- Navbar & Reveal Setup ---------- */
+/* ---------- Navbar & Scroll Setup ---------- */
 
 function setupNavbar() {
   const nav = $("#mainNav");
@@ -641,7 +665,7 @@ function setupNavbar() {
   const sections = $$("section[id], header[id]");
   const navLinks = $$(".navbar-nav .nav-link");
   const setActive = () => {
-    const pos = window.scrollY + 120;
+    const pos = window.scrollY + 140;
     let current = "";
     sections.forEach((s) => {
       if (pos >= s.offsetTop) current = s.id;
@@ -654,7 +678,16 @@ function setupNavbar() {
   window.addEventListener("scroll", setActive, { passive: true });
 }
 
+/* ---------- Scroll Reveal Setup (Smooth, Non-Blocking, Reliable) ---------- */
+
 function setupReveal() {
+  const revealElements = $$(".reveal");
+
+  if (!("IntersectionObserver" in window)) {
+    revealElements.forEach((el) => el.classList.add("visible"));
+    return;
+  }
+
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -664,32 +697,40 @@ function setupReveal() {
         }
       });
     },
-    { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    { threshold: 0.05, rootMargin: "0px 0px 50px 0px" }
   );
-  $$(".reveal").forEach((el) => observer.observe(el));
+
+  revealElements.forEach((el) => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 50 && rect.bottom > -50) {
+      el.classList.add("visible");
+    } else {
+      observer.observe(el);
+    }
+  });
+
+  // Safety fallback to guarantee everything is visible
+  setTimeout(() => {
+    revealElements.forEach((el) => el.classList.add("visible"));
+  }, 600);
 }
 
 /* ---------- Init ---------- */
 
 function init() {
-  renderHero();
-  renderAbout();
-  renderSkills();
-  renderRoadmap();
-  renderProjects();
-  renderLearning();
-  renderJourney();
-  renderAchievements();
-  renderProfileDashboard();
-  renderFooter();
-
+  // Attach event listeners to pre-rendered elements
+  attachRoadmapEvents();
   setupContactForm();
   setupNavbar();
   setupReveal();
 
+  // Progressively fetch fresh API data if available
   fetchProfile();
   fetchProjects();
 }
 
-document.addEventListener("DOMContentLoaded", init);
-  
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}

@@ -20,7 +20,7 @@
     />
     <!-- Google Fonts: Playfair Display + DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
@@ -66,23 +66,28 @@
         <div class="container">
           <div class="row align-items-center g-5">
             <div class="col-lg-7 hero-text">
-              <p class="eyebrow reveal">WELCOME TO MY DIGITAL SPACE</p>
-              <h1 class="display-hero reveal">
+              <p class="eyebrow reveal visible">WELCOME TO MY DIGITAL SPACE</p>
+              <h1 class="display-hero reveal visible">
                 Hi, I'm<br />
                 <span class="accent-name" id="heroName">Meet Patil.</span>
               </h1>
-              <p class="hero-role reveal" id="heroRole">Frontend Developer • AI Application Developer • Backend Learner</p>
-              <p class="hero-desc reveal">
+              <p class="hero-role reveal visible" id="heroRole">Frontend Developer • AI Application Developer • Backend Learner</p>
+              <p class="hero-desc reveal visible">
                 I'm a developer building digital platforms, connecting frontend interfaces with artificial intelligence capabilities and modern backend services.
               </p>
-              <div class="hero-actions reveal">
+              <div class="hero-actions reveal visible">
                 <a href="#roadmap" class="btn btn-accent">Explore My Journey <i class="bi bi-arrow-right ms-1"></i></a>
                 <a href="#projects" class="btn btn-outline-soft">View My Projects</a>
               </div>
-              <div class="hero-social reveal" id="heroSocial"></div>
+              <div class="hero-social reveal visible" id="heroSocial">
+                <a class="disabled-link" aria-label="github (not added yet)" title="Not added yet"><i class="bi bi-github"></i></a>
+                <a class="disabled-link" aria-label="linkedin (not added yet)" title="Not added yet"><i class="bi bi-linkedin"></i></a>
+                <a class="disabled-link" aria-label="instagram (not added yet)" title="Not added yet"><i class="bi bi-instagram"></i></a>
+                <a class="disabled-link" aria-label="email (not added yet)" title="Not added yet"><i class="bi bi-envelope"></i></a>
+              </div>
             </div>
             <div class="col-lg-5">
-              <div class="profile-card reveal">
+              <div class="profile-card reveal visible">
                 <div class="profile-photo">
                   <span class="photo-label">MEET PATIL</span>
                 </div>
@@ -103,14 +108,28 @@
         <div class="container">
           <div class="row g-5">
             <div class="col-lg-7">
-              <p class="eyebrow reveal">ABOUT ME</p>
-              <h2 class="section-heading reveal">
+              <p class="eyebrow reveal visible">ABOUT ME</p>
+              <h2 class="section-heading reveal visible">
                 More than just<br />code.
               </h2>
-              <div class="about-text reveal" id="aboutText"></div>
+              <div class="about-text reveal visible" id="aboutText">
+                <p>I am a Frontend Developer and AI Application Developer actively expanding my capabilities into full-stack and backend engineering.</p>
+                <p>My focus is on creating responsive, intuitive user interfaces and connecting them with AI capabilities and Node.js backend services to build practical digital products.</p>
+                <div class="interest-chips">
+                  <span class="chip">Frontend Engineering</span>
+                  <span class="chip">AI Application Development</span>
+                  <span class="chip">Node.js & Backend Architecture</span>
+                  <span class="chip">Civic Technologies</span>
+                </div>
+              </div>
             </div>
             <div class="col-lg-5">
-              <div class="edu-card reveal" id="educationCard"></div>
+              <div class="edu-card reveal visible" id="educationCard">
+                <p class="edu-label">Education & Status</p>
+                <h3>MSBTE Diploma</h3>
+                <p class="edu-year">3rd Year</p>
+                <p class="edu-desc">Currently pursuing diploma studies while developing full-stack AI platforms.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -120,11 +139,88 @@
       <section id="skills" class="section section-alt">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">SKILLS</p>
-            <h2 class="section-heading reveal">My toolkit so far.</h2>
-            <p class="section-sub reveal">Honest levels — no invented percentages.</p>
+            <p class="eyebrow reveal visible">SKILLS</p>
+            <h2 class="section-heading reveal visible">My toolkit so far.</h2>
+            <p class="section-sub reveal visible">Honest levels — no invented percentages.</p>
           </div>
-          <div class="row g-4" id="skillsGrid"></div>
+          <div class="row g-4" id="skillsGrid">
+            <div class="col-md-6 col-lg-4">
+              <div class="skill-card">
+                <div class="skill-icon"><i class="bi bi-layout-text-window-reverse"></i></div>
+                <h4>Frontend Development</h4>
+                <ul class="skill-list">
+                  <li class="skill-item">
+                    <span class="skill-name">HTML5 / CSS3</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">JavaScript (ES6+)</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">Bootstrap 5</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">Tailwind CSS</span>
+                    <span class="skill-level" data-level="Developing">Developing</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">Responsive UI/UX</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+              <div class="skill-card">
+                <div class="skill-icon"><i class="bi bi-cpu"></i></div>
+                <h4>AI & APIs</h4>
+                <ul class="skill-list">
+                  <li class="skill-item">
+                    <span class="skill-name">AI API Integration</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">AI Chat Services</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">AI Prompt Engineering</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">RESTful APIs</span>
+                    <span class="skill-level" data-level="Comfortable">Comfortable</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+              <div class="skill-card">
+                <div class="skill-icon"><i class="bi bi-server"></i></div>
+                <h4>Backend Learning Path</h4>
+                <ul class="skill-list">
+                  <li class="skill-item">
+                    <span class="skill-name">Node.js & Express</span>
+                    <span class="skill-level" data-level="Building">Building</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">User Authentication</span>
+                    <span class="skill-level" data-level="Building">Building</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">Databases (SQL/NoSQL)</span>
+                    <span class="skill-level" data-level="Learning">Learning</span>
+                  </li>
+                  <li class="skill-item">
+                    <span class="skill-name">System Architecture</span>
+                    <span class="skill-level" data-level="Learning">Learning</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -132,11 +228,64 @@
       <section id="roadmap" class="section">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">CAREER ROADMAP</p>
-            <h2 class="section-heading reveal">The direction I'm heading.</h2>
-            <p class="section-sub reveal">Click any milestone to see the details.</p>
+            <p class="eyebrow reveal visible">CAREER ROADMAP</p>
+            <h2 class="section-heading reveal visible">The direction I'm heading.</h2>
+            <p class="section-sub reveal visible">Click any milestone to see the details.</p>
           </div>
-          <div class="roadmap" id="roadmapTimeline"></div>
+          <div class="roadmap" id="roadmapTimeline">
+            <div class="milestone reveal visible" data-index="0" role="button" tabindex="0" aria-label="View details for 1. Core Web Foundation">
+              <div class="milestone-card">
+                <div class="milestone-head">
+                  <h3 class="milestone-title">1. Core Web Foundation</h3>
+                  <span class="milestone-status status-completed">Completed</span>
+                </div>
+                <p class="mt-2 mb-1" style="color:var(--text-2); font-size:0.95rem;">Mastered frontend styling and structural principles through clean HTML5, CSS3, and responsive design systems.</p>
+                <div class="milestone-techs">
+                  <span class="chip">HTML5</span><span class="chip">CSS3</span><span class="chip">Responsive Web Design</span>
+                </div>
+                <p class="milestone-hint"><i class="bi bi-info-circle"></i> Click to view progression details</p>
+              </div>
+            </div>
+            <div class="milestone reveal visible" data-index="1" role="button" tabindex="0" aria-label="View details for 2. Modern JavaScript & Frameworks">
+              <div class="milestone-card">
+                <div class="milestone-head">
+                  <h3 class="milestone-title">2. Modern JavaScript & Frameworks</h3>
+                  <span class="milestone-status status-completed">Completed</span>
+                </div>
+                <p class="mt-2 mb-1" style="color:var(--text-2); font-size:0.95rem;">Built dynamic web interfaces utilizing ES6 JavaScript syntax alongside modern UI toolkits like Bootstrap 5 and Tailwind CSS.</p>
+                <div class="milestone-techs">
+                  <span class="chip">JavaScript (ES6+)</span><span class="chip">Bootstrap 5</span><span class="chip">Tailwind CSS</span>
+                </div>
+                <p class="milestone-hint"><i class="bi bi-info-circle"></i> Click to view progression details</p>
+              </div>
+            </div>
+            <div class="milestone reveal visible" data-index="2" role="button" tabindex="0" aria-label="View details for 3. Full-Stack AI Platforms (PeopleFirst)">
+              <div class="milestone-card">
+                <div class="milestone-head">
+                  <h3 class="milestone-title">3. Full-Stack AI Platforms (PeopleFirst)</h3>
+                  <span class="milestone-status status-completed">Completed</span>
+                </div>
+                <p class="mt-2 mb-1" style="color:var(--text-2); font-size:0.95rem;">Successfully built and deployed PeopleFirst — an AI-powered platform integrating chat, career roadmaps, authentication, and Node.js API services.</p>
+                <div class="milestone-techs">
+                  <span class="chip">Node.js</span><span class="chip">Express</span><span class="chip">AI APIs</span><span class="chip">Authentication</span><span class="chip">JavaScript</span>
+                </div>
+                <p class="milestone-hint"><i class="bi bi-info-circle"></i> Click to view progression details</p>
+              </div>
+            </div>
+            <div class="milestone reveal visible" data-index="3" role="button" tabindex="0" aria-label="View details for 4. Civic Engineering & Disaster Response (CivicSphere)">
+              <div class="milestone-card">
+                <div class="milestone-head">
+                  <h3 class="milestone-title">4. Civic Engineering & Disaster Response (CivicSphere)</h3>
+                  <span class="milestone-status status-currently-working-on">Currently Developing</span>
+                </div>
+                <p class="mt-2 mb-1" style="color:var(--text-2); font-size:0.95rem;">Building CivicSphere — an AI platform designed for emergency response coordination, smart grievance management, and citizen support.</p>
+                <div class="milestone-techs">
+                  <span class="chip">AI Coordination</span><span class="chip">Node.js Architecture</span><span class="chip">Smart Grievances</span><span class="chip">Databases</span>
+                </div>
+                <p class="milestone-hint"><i class="bi bi-info-circle"></i> Click to view progression details</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -144,12 +293,66 @@
       <section id="projects" class="section section-alt">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">PROJECTS</p>
-            <h2 class="section-heading reveal">Things I'm building.</h2>
-            <p class="section-sub reveal">Only real work — honest status on every project.</p>
+            <p class="eyebrow reveal visible">PROJECTS</p>
+            <h2 class="section-heading reveal visible">Things I'm building.</h2>
+            <p class="section-sub reveal visible">Only real work — honest status on every project.</p>
           </div>
-          <div class="project-filters reveal" id="projectFilters"></div>
-          <div class="row g-4 mt-2" id="projectsGrid"></div>
+          <div class="project-filters reveal visible" id="projectFilters">
+            <button class="filter-btn active" data-filter="All">All</button>
+            <button class="filter-btn" data-filter="Full-Stack AI">Full-Stack AI</button>
+            <button class="filter-btn" data-filter="Frontend">Frontend</button>
+            <button class="filter-btn" data-filter="Backend">Backend</button>
+          </div>
+          <div class="row g-4 mt-2" id="projectsGrid">
+            <div class="col-md-6">
+              <div class="project-card">
+                <div class="proj-icon"><i class="bi bi-person-badge"></i></div>
+                <h4>PeopleFirst</h4>
+                <p class="proj-desc">An AI-powered platform designed to give users streamlined access to useful information and tailored digital services.</p>
+                <ul class="proj-feature-list">
+                  <li><i class="bi bi-check2-circle"></i> AI Chat & AI Quiz Generator</li>
+                  <li><i class="bi bi-check2-circle"></i> Education Features & Student News</li>
+                  <li><i class="bi bi-check2-circle"></i> AI Career Roadmap Generator</li>
+                  <li><i class="bi bi-check2-circle"></i> User Authentication & Secure API Integrations</li>
+                  <li><i class="bi bi-check2-circle"></i> Modern Responsive UI/UX</li>
+                </ul>
+                <span class="project-status proj-status-completed">
+                  <i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> Completed
+                </span>
+                <div class="proj-techs">
+                  <span class="chip">Frontend (JS/CSS)</span>
+                  <span class="chip">Node.js Backend</span>
+                  <span class="chip">Express</span>
+                  <span class="chip">AI APIs</span>
+                  <span class="chip">Authentication</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="project-card">
+                <div class="proj-icon"><i class="bi bi-building-gear"></i></div>
+                <h4>CivicSphere</h4>
+                <p class="proj-desc">Major flagship project focused on AI-powered civic services, farmer assistance, and real-time emergency/disaster coordination.</p>
+                <ul class="proj-feature-list">
+                  <li><i class="bi bi-check2-circle"></i> AI-Powered Civic Assistance</li>
+                  <li><i class="bi bi-check2-circle"></i> Disaster & Emergency Response Coordination</li>
+                  <li><i class="bi bi-check2-circle"></i> Farmer Support & Agricultural Tools</li>
+                  <li><i class="bi bi-check2-circle"></i> Smart Grievance Management System</li>
+                  <li><i class="bi bi-check2-circle"></i> Citizen-Focused Information Portal</li>
+                </ul>
+                <span class="project-status proj-status-currently-working-on">
+                  <i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> Currently Working On
+                </span>
+                <div class="proj-techs">
+                  <span class="chip">Frontend Architecture</span>
+                  <span class="chip">Node.js Backend</span>
+                  <span class="chip">Databases</span>
+                  <span class="chip">AI Integration</span>
+                  <span class="chip">API Architecture</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -157,10 +360,39 @@
       <section id="learning" class="section">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">CURRENTLY LEARNING</p>
-            <h2 class="section-heading reveal">What I'm working on right now.</h2>
+            <p class="eyebrow reveal visible">CURRENTLY LEARNING</p>
+            <h2 class="section-heading reveal visible">What I'm working on right now.</h2>
           </div>
-          <div class="row g-4" id="learningGrid"></div>
+          <div class="row g-4" id="learningGrid">
+            <div class="col-md-6 col-lg-3">
+              <div class="learn-card">
+                <div class="learn-icon"><i class="bi bi-server"></i></div>
+                <h4>Node.js & Express Architecture</h4>
+                <span class="learn-status">Active Focus</span>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <div class="learn-card">
+                <div class="learn-icon"><i class="bi bi-database"></i></div>
+                <h4>Database Design & Management</h4>
+                <span class="learn-status">Learning</span>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <div class="learn-card">
+                <div class="learn-icon"><i class="bi bi-cpu"></i></div>
+                <h4>Advanced AI API Orchestration</h4>
+                <span class="learn-status">Building</span>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <div class="learn-card">
+                <div class="learn-icon"><i class="bi bi-shield-lock"></i></div>
+                <h4>System Authentication & Security</h4>
+                <span class="learn-status">Building</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -168,10 +400,28 @@
       <section id="journey" class="section section-alt">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">LEARNING JOURNEY</p>
-            <h2 class="section-heading reveal">The path I'm on.</h2>
+            <p class="eyebrow reveal visible">LEARNING JOURNEY</p>
+            <h2 class="section-heading reveal visible">The path I'm on.</h2>
           </div>
-          <div class="journey-flow" id="journeyFlow"></div>
+          <div class="journey-flow" id="journeyFlow">
+            <div class="journey-step reveal visible">1. HTML / CSS</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">2. JavaScript</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">3. Bootstrap / Tailwind</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">4. APIs Integration</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">5. Node.js / Express</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">6. Databases</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">7. Authentication</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step reveal visible">8. AI Integration</div>
+            <div class="journey-arrow"><i class="bi bi-arrow-down"></i></div>
+            <div class="journey-step final reveal visible">9. Full-Stack AI Projects</div>
+          </div>
         </div>
       </section>
 
@@ -179,11 +429,17 @@
       <section id="achievements" class="section">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">ACHIEVEMENTS</p>
-            <h2 class="section-heading reveal">Milestones worth noting.</h2>
-            <p class="section-sub reveal">Nothing invented — only what's real, added when it happens.</p>
+            <p class="eyebrow reveal visible">ACHIEVEMENTS</p>
+            <h2 class="section-heading reveal visible">Milestones worth noting.</h2>
+            <p class="section-sub reveal visible">Nothing invented — only what's real, added when it happens.</p>
           </div>
-          <div id="achievementsWrap"></div>
+          <div id="achievementsWrap">
+            <div class="achievements-empty reveal visible">
+              <i class="bi bi-trophy"></i>
+              <h4>Building & Expanding</h4>
+              <p>Project milestones, platform launches, and tech certifications will be updated dynamically here.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -191,10 +447,39 @@
       <section id="profile" class="section section-alt">
         <div class="container">
           <div class="text-center mb-5">
-            <p class="eyebrow reveal">PROFILE</p>
-            <h2 class="section-heading reveal">My digital profile.</h2>
+            <p class="eyebrow reveal visible">PROFILE</p>
+            <h2 class="section-heading reveal visible">My digital profile.</h2>
           </div>
-          <div class="profile-dashboard reveal" id="profileDashboard"></div>
+          <div class="profile-dashboard reveal visible" id="profileDashboard">
+            <div class="dashboard-top">
+              <div class="dashboard-avatar">MP</div>
+              <h3 class="dashboard-name">Meet Patil</h3>
+              <p class="dashboard-role">Frontend Developer • AI Application Developer • Backend Learner</p>
+            </div>
+            <div class="dashboard-stats">
+              <div class="stat-cell"><div class="stat-num">13</div><div class="stat-label">Skills</div></div>
+              <div class="stat-cell"><div class="stat-num">2</div><div class="stat-label">Projects</div></div>
+              <div class="stat-cell"><div class="stat-num">9</div><div class="stat-label">Journey Steps</div></div>
+            </div>
+            <div class="dashboard-info">
+              <div class="info-item">
+                <div class="info-label">Developer Profile</div>
+                <div class="info-value">Frontend + AI Apps + Backend Learner</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Education</div>
+                <div class="info-value">MSBTE Diploma (3rd Year)</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Completed Project</div>
+                <div class="info-value">PeopleFirst (Full-Stack AI)</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Current Major Project</div>
+                <div class="info-value">CivicSphere (Civic AI Platform)</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -203,14 +488,14 @@
         <div class="container">
           <div class="row g-5 align-items-center">
             <div class="col-lg-5">
-              <p class="eyebrow reveal">GET IN TOUCH</p>
-              <h2 class="section-heading reveal">Let's create something.</h2>
-              <p class="section-sub reveal">
+              <p class="eyebrow reveal visible">GET IN TOUCH</p>
+              <h2 class="section-heading reveal visible">Let's create something.</h2>
+              <p class="section-sub reveal visible">
                 Have an idea, a question, or just want to connect? Send a message.
               </p>
             </div>
             <div class="col-lg-7">
-              <form class="contact-form reveal" id="contactForm" action="javascript:void(0);" novalidate>
+              <form class="contact-form reveal visible" id="contactForm" action="javascript:void(0);" novalidate>
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label for="cName" class="form-label">Name</label>
@@ -250,7 +535,12 @@
             <h3 class="footer-name">MEET PATIL</h3>
             <p class="footer-tag">Building. Learning. Growing.</p>
           </div>
-          <div class="footer-social" id="footerSocial"></div>
+          <div class="footer-social" id="footerSocial">
+            <a class="disabled-link" aria-label="github (not added yet)" title="Not added yet"><i class="bi bi-github"></i></a>
+            <a class="disabled-link" aria-label="linkedin (not added yet)" title="Not added yet"><i class="bi bi-linkedin"></i></a>
+            <a class="disabled-link" aria-label="instagram (not added yet)" title="Not added yet"><i class="bi bi-instagram"></i></a>
+            <a class="disabled-link" aria-label="email (not added yet)" title="Not added yet"><i class="bi bi-envelope"></i></a>
+          </div>
         </div>
         <hr class="footer-divider" />
         <p class="footer-copy">© 2026 Meet Patil</p>
@@ -262,7 +552,7 @@
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content roadmap-modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="roadmapModalLabel"></h5>
+            <h5 class="modal-title" id="roadmapModalLabel">Milestone Details</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" id="roadmapModalBody"></div>
