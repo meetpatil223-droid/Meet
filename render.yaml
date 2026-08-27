@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: meet-patil-portfolio
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_TO_EMAIL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
