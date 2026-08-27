@@ -1,4 +1,4 @@
-﻿# Environment Variables & Secrets
+# Environment Variables & Secrets
 .env
 .env.*
 !.env.example
@@ -25,8 +25,7 @@ ENV/
 *.sqlite3
 *.log
 
-# Build & Dist
-dist/
+# Build
 build/
 
 # Editor & OS Files
