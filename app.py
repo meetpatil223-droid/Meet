@@ -41,9 +41,9 @@ def send_email_notification(name, email, subject, message):
     Sends email notification via Resend HTTPS REST API (cloud-safe, no SMTP blocking)
     with fallback to direct Gmail SMTP if configured.
     """
-    resend_api_key = os.getenv("RESEND_API_KEY")
-    resend_to_email = os.getenv("RESEND_TO_EMAIL", "meetpatil223@gmail.com")
-    to_email = os.getenv("TO_EMAIL", "meetpatil223@gmail.com")
+    resend_api_key = (os.getenv("RESEND_API_KEY") or "").strip().strip('"').strip("'")
+    resend_to_email = (os.getenv("RESEND_TO_EMAIL") or os.getenv("TO_EMAIL") or "meetpatil223@gmail.com").strip()
+    to_email = (os.getenv("TO_EMAIL") or "meetpatil223@gmail.com").strip()
 
     html_content = f"""
     <div style="font-family: Arial, sans-serif; padding: 24px; border: 1px solid #ded2c2; border-radius: 12px; background-color: #fffdf8; color: #29251f; max-width: 600px;">
@@ -62,6 +62,7 @@ def send_email_notification(name, email, subject, message):
         # 1. Primary Method: Resend HTTPS REST API (Works 100% on Render, Vercel & Cloud)
         if resend_api_key:
             try:
+                print(f"[NOTIFICATION] Attempting Resend API dispatch to {resend_to_email}...", flush=True)
                 payload = json.dumps({
                     "from": "Portfolio Contact <onboarding@resend.dev>",
                     "to": [resend_to_email],
@@ -79,20 +80,27 @@ def send_email_notification(name, email, subject, message):
                         "User-Agent": "MeetPatil-Portfolio/1.0"
                     }
                 )
-                with urllib.request.urlopen(req, timeout=8) as res:
-                    app.logger.info(f"Email sent via Resend API: {res.read().decode('utf-8')}")
+                with urllib.request.urlopen(req, timeout=10) as res:
+                    res_body = res.read().decode("utf-8")
+                    print(f"[NOTIFICATION SUCCESS] Email sent via Resend API: {res_body}", flush=True)
+                    app.logger.info(f"Email sent via Resend API: {res_body}")
                     return True
             except urllib.error.HTTPError as he:
                 error_body = he.read().decode("utf-8", errors="ignore")
+                print(f"[NOTIFICATION ERROR] Resend API HTTP {he.code}: {error_body}", flush=True)
                 app.logger.warning(f"Resend API HTTP Error {he.code}: {error_body}")
             except Exception as resend_err:
+                print(f"[NOTIFICATION ERROR] Resend API dispatch failed: {resend_err}", flush=True)
                 app.logger.warning(f"Resend API dispatch failed: {resend_err}")
+        else:
+            print("[NOTIFICATION INFO] RESEND_API_KEY not set. Check your Render Environment Variables.", flush=True)
 
         # 2. Secondary Fallback: Direct Gmail SMTP (Local development)
         email_user = os.getenv("EMAIL_USER")
         email_pass = os.getenv("EMAIL_PASS")
         if email_user and email_pass:
             try:
+                print(f"[NOTIFICATION] Attempting Gmail SMTP dispatch...", flush=True)
                 clean_pass = email_pass.replace(" ", "") if (" " in email_pass and len(email_pass.replace(" ", "")) == 16) else email_pass
                 msg = MIMEMultipart("alternative")
                 msg["Subject"] = f"📩 New Portfolio Message: {subject}"
@@ -101,16 +109,20 @@ def send_email_notification(name, email, subject, message):
                 msg["Reply-To"] = email
                 msg.attach(MIMEText(html_content, "html"))
 
-                with smtplib.SMTP("smtp.gmail.com", 587, timeout=5) as server:
+                with smtplib.SMTP("smtp.gmail.com", 587, timeout=8) as server:
                     server.ehlo()
                     server.starttls()
                     server.ehlo()
                     server.login(email_user, clean_pass)
                     server.send_message(msg)
+                print("[NOTIFICATION SUCCESS] Email sent via Gmail SMTP", flush=True)
                 app.logger.info("Email sent via Gmail SMTP")
                 return True
             except Exception as smtp_err:
+                print(f"[NOTIFICATION ERROR] Gmail SMTP fallback failed: {smtp_err}", flush=True)
                 app.logger.warning(f"Gmail SMTP fallback failed: {smtp_err}")
+        elif not resend_api_key:
+            print("[NOTIFICATION ERROR] No email service configured (missing RESEND_API_KEY or EMAIL_USER/EMAIL_PASS).", flush=True)
 
         return False
 
